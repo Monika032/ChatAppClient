@@ -24,23 +24,25 @@ import java.util.StringTokenizer;
 public class MainActivity extends AppCompatActivity {
     EditText input;
     private static Socket s;
-    private static PrintWriter pw;
+//    private static PrintWriter pw;
     DataOutputStream dos;
     DataInputStream dis;
-    TextView msgShow;
+//    TextView msgShow;
     String msg, MsgToSend;
     Handler handler;
     Handler handlerSent;
-    TextView msgSent;
+    ListView listView;
+    Boolean send = false;
+//    TextView msgSent;
     boolean flag = false;
 
     ArrayList<Message> list = new ArrayList<>();
     //ArrayAdapter<String> listAdapter;
-    static MessageAdapter adapter;
+    MessageAdapter adapter;
 
     String message = "connect#client 0";
     String msg1;
-    private static String ip = "192.168.43.45";
+    private static String ip = "10.100.127.219";
 
 
 
@@ -54,152 +56,122 @@ public class MainActivity extends AppCompatActivity {
 
         //listAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,list);
         adapter = new MessageAdapter(this,list);
-        ListView listView = findViewById(R.id.list_view);
+        listView = findViewById(R.id.list_view);
         listView.setAdapter(adapter);
 
+        myTask mt = new myTask();
+        mt.execute();
 
     }
 
-    void updateApapter() {
-        adapter.notifyDataSetChanged();
-    }
 
-    public void send_text(View v){
+
+
+
+    public void send_text(View v) {
 
         message = input.getText().toString();
         msg1 = message;
         StringTokenizer st = new StringTokenizer(msg1, "#");
         MsgToSend = st.nextToken();
 
-       // if(list.size() == 8) {
-            //list.remove(0);
-            //adapter.notifyDataSetChanged();
-       // }
         list.add(new Message(MsgToSend,true));
         adapter.notifyDataSetChanged();
+
         Log.d("ErrorList:",""+list.size());
 
+        myTaskSend mt2 = new myTaskSend();
+        mt2.execute(message);
 
-        myTask mt = new myTask();
-        mt.execute();
+
+
 
         Toast.makeText(getApplicationContext(),"Data Sent",Toast.LENGTH_LONG).show();
-
-
     }
 
 
-    class myTask extends AsyncTask<Void,Void,Void>{
+
+    class myTaskSend extends AsyncTask<String,String,String>{
         @Override
-        protected void onProgressUpdate(Void... values) {
-            super.onProgressUpdate(values);
-            updateApapter();
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            Toast.makeText(MainActivity.this, "Sent", Toast.LENGTH_SHORT).show();
         }
+
+        @Override
+        protected String doInBackground(String... strings) {
+            if(!message.equals("")) {
+
+                try {
+                    dos.writeUTF(message);
+                    dos.flush();
+                    send = false;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                message = "";
+            }
+            return null;
+        }
+    }
+
+
+
+
+
+
+
+    class myTask extends AsyncTask<Void,Void,Void>{
 
         @Override
         protected Void doInBackground(Void... voids) {
 
+
             try {
-                if(flag == false) {
-                    s = new Socket(ip, 1234);
-                    flag = true;
-                }
-//                pw = new PrintWriter(s.getOutputStream());
-//                pw.write(message);
-//                pw.flush();
-               dos = new DataOutputStream(s.getOutputStream());
-//                dos.writeUTF(message);
-               dis = new DataInputStream(s.getInputStream());
-//                String read = dis.readUTF();
-//                msgShow.setText(read);
-
-                Thread sendMessage = new Thread(new Runnable()
-                {
-                    @Override
-                    public void run() {
-                        while (true) {
-
-                            // read the message to deliver.
-                            //String msg = scn.nextLine();
-
-                            try {
-                                // write on the output stream
-                                if(!message.equals("")) {
-//                                    handlerSent.post(new Runnable() {
-//                                        public void run() {
-//                                            msgSent.setText(MsgToSend);
-//                                        }
-//                                    });
-
-                                    dos.writeUTF(message);
-
-
-                                    message = "";
-                                }
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                });
-
-                // readMessage thread
-                Thread readMessage = new Thread(new Runnable()
-                {
-                    @Override
-                    public void run() {
-
-                        while (true) {
-                            try {
-                                // read the message sent to this client
-                            msg = "";
-                                msg = dis.readUTF().;
-                                Log.d("Error:",msg);
-                                //System.out.println(msg);
-                                if(!msg.equals("") || msg!=null)
-                                {
-//                                    msgShow.setText(msg);
-
-                                   handler.post(new Runnable() {
-                                                     public void run() {
-                                                        //msgShow.setText(msg);
-                                                         //if(list.size() == 8) {
-                                                            // list.remove(0);
-                                                             //adapter.notifyDataSetChanged();
-                                                        // }
-                                                         list.add(new Message(msg,false));
-                                                         adapter.notifyDataSetChanged();
-
-                                                         Log.d("ErrorList:",""+list.size());
-
-                                                     }
-                                                 });
-//
-//                                    list.add(new Message(msg,false));
-//                                    onProgressUpdate(msg);
-                                   //adapter.notifyDataSetChanged();
-
-                                    Log.d("Error1:",msg);
-                                }
-
-
-                            } catch (IOException e) {
-
-                                e.printStackTrace();
-                            }
-
-                        }
-                    }
-                });
-
-
-
-                sendMessage.start();
-                readMessage.start();
-
-            }catch (IOException e){
+                s = new Socket(ip, 1234);
+                dos = new DataOutputStream(s.getOutputStream());
+                dis = new DataInputStream(s.getInputStream());
+            } catch (IOException e) {
                 e.printStackTrace();
             }
+
+            Thread readMessage = new Thread(new Runnable()
+            {
+                @Override
+                public void run() {
+
+                    while (true) {
+                        try {
+
+                           // msg = "";
+                            msg = dis.readUTF();
+                            Log.d("Error:",msg);
+                            //System.out.println(msg);
+                            if(!msg.equals("") || msg!=null)
+                            {
+//                                    msgShow.setText(msg);
+
+                                handler.post(new Runnable() {
+                                    public void run() {
+                                        list.add(new Message(msg,false));
+                                        adapter.notifyDataSetChanged();
+                                        Log.d("ErrorList:",""+list.size());
+
+                                    }
+                                });
+
+                                Log.d("Error1:",msg);
+                            }
+                        } catch (IOException e) {
+
+                            e.printStackTrace();
+                        }
+
+                    }
+                }
+            });
+
+            readMessage.start();
 
 
             return null;
