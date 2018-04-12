@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,12 +34,13 @@ public class MainActivity extends AppCompatActivity {
     TextView msgSent;
     boolean flag = false;
 
-    ArrayList<String> list = new ArrayList<>();
-    ArrayAdapter<String> listview;
+    ArrayList<Message> list = new ArrayList<>();
+    //ArrayAdapter<String> listAdapter;
+    static MessageAdapter adapter;
 
     String message = "connect#client 0";
     String msg1;
-    private static String ip = "10.100.127.219";
+    private static String ip = "192.168.43.45";
 
 
 
@@ -47,12 +49,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         input = findViewById(R.id.msg_input);
-        msgShow = findViewById(R.id.msg_received);
-        msgSent = findViewById(R.id.msg_sent);
         handler = new Handler();
         handlerSent = new Handler();
 
+        //listAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,list);
+        adapter = new MessageAdapter(this,list);
+        ListView listView = findViewById(R.id.list_view);
+        listView.setAdapter(adapter);
 
+
+    }
+
+    void updateApapter() {
+        adapter.notifyDataSetChanged();
     }
 
     public void send_text(View v){
@@ -61,9 +70,15 @@ public class MainActivity extends AppCompatActivity {
         msg1 = message;
         StringTokenizer st = new StringTokenizer(msg1, "#");
         MsgToSend = st.nextToken();
-        list.add(MsgToSend);
 
-        listview = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1,list);
+       // if(list.size() == 8) {
+            //list.remove(0);
+            //adapter.notifyDataSetChanged();
+       // }
+        list.add(new Message(MsgToSend,true));
+        adapter.notifyDataSetChanged();
+        Log.d("ErrorList:",""+list.size());
+
 
         myTask mt = new myTask();
         mt.execute();
@@ -73,12 +88,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    void printMsg (String msgRcd){
-        msgShow.setText(msgRcd);
-    }
-
 
     class myTask extends AsyncTask<Void,Void,Void>{
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+            updateApapter();
+        }
 
         @Override
         protected Void doInBackground(Void... voids) {
@@ -109,11 +125,12 @@ public class MainActivity extends AppCompatActivity {
                             try {
                                 // write on the output stream
                                 if(!message.equals("")) {
-                                    handlerSent.post(new Runnable() {
-                                        public void run() {
-                                            msgSent.setText(MsgToSend);
-                                        }
-                                    });
+//                                    handlerSent.post(new Runnable() {
+//                                        public void run() {
+//                                            msgSent.setText(MsgToSend);
+//                                        }
+//                                    });
+
                                     dos.writeUTF(message);
 
 
@@ -135,25 +152,42 @@ public class MainActivity extends AppCompatActivity {
                         while (true) {
                             try {
                                 // read the message sent to this client
-                                msg = dis.readUTF();
-                                Log.d("Error:","fuck you");
+                            msg = "";
+                                msg = dis.readUTF().;
+                                Log.d("Error:",msg);
                                 //System.out.println(msg);
-                                if(!msg.equals(""))
+                                if(!msg.equals("") || msg!=null)
                                 {
-                                    list.add(msg);
-                                    //msgShow.setText(msg);
-                                    handler.post(new Runnable() {
+//                                    msgShow.setText(msg);
+
+                                   handler.post(new Runnable() {
                                                      public void run() {
-                                                         msgShow.setText(msg);
+                                                        //msgShow.setText(msg);
+                                                         //if(list.size() == 8) {
+                                                            // list.remove(0);
+                                                             //adapter.notifyDataSetChanged();
+                                                        // }
+                                                         list.add(new Message(msg,false));
+                                                         adapter.notifyDataSetChanged();
+
+                                                         Log.d("ErrorList:",""+list.size());
+
                                                      }
                                                  });
+//
+//                                    list.add(new Message(msg,false));
+//                                    onProgressUpdate(msg);
+                                   //adapter.notifyDataSetChanged();
+
                                     Log.d("Error1:",msg);
                                 }
+
 
                             } catch (IOException e) {
 
                                 e.printStackTrace();
                             }
+
                         }
                     }
                 });

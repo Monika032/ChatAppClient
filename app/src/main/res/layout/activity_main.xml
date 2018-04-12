@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.example.monika.pctoand.MainActivity"
     android:orientation="vertical">
 
-    <TextView
+    <!--<TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/msg_sent"
@@ -16,8 +16,12 @@
         android:layout_marginRight="8dp"
         android:layout_marginTop="8dp"
         android:background="@color/colorAccent"
-        android:text="blah"/>
-    <TextView
+        android:text="blah"/>-->
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/list_view"></ListView>
+    <!--<TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/msg_received"
@@ -26,12 +30,14 @@
         android:padding="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="8dp"
-        android:background="#00bfff"/>
+        android:layout_above="@+id/msg_input"
+        android:background="#00bfff"/>-->
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:layout_toLeftOf="@id/send_button"
         android:layout_marginTop="16dp"
+        android:layout_alignParentBottom="true"
         android:id="@+id/msg_input"
         />
 
@@ -39,8 +45,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="SEND"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginTop="8dp"
+        android:id="@+id/send_button"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
         android:onClick="send_text"/>
 
-</LinearLayout>
+</RelativeLayout>
