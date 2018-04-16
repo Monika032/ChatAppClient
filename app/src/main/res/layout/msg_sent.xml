@@ -10,10 +10,11 @@
         android:id="@+id/msg_item"
         android:textSize="16sp"
         android:padding="8dp"
+        android:textColor="#FFFFFF"
         android:layout_marginRight="8dp"
         android:layout_marginTop="8dp"
         android:layout_gravity="right"
-        android:background="@color/colorAccent"
+        android:background="@drawable/text_shape_sent"
         android:text="blah" />
 
 </LinearLayout>

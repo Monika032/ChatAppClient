@@ -27,7 +27,6 @@ public class MessageAdapter extends ArrayAdapter<Message> {
 
         Message item = getItem(position);
 
-        //if(convertView == null) {
             if (item.getFlag()) {
                 convertView = LayoutInflater.from(getContext()).inflate(R.layout.msg_sent, parent, false);
 
@@ -39,8 +38,6 @@ public class MessageAdapter extends ArrayAdapter<Message> {
                 TextView receiving = convertView.findViewById(R.id.msg_rcv_item);
                 receiving.setText(item.getMessage());
             }
-        //}
-        Log.d("ErrorAdapter:",item.getMessage());
 
 
         return convertView;

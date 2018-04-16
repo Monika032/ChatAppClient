@@ -1,7 +1,11 @@
 package com.example.monika.pctoand;
 
+import android.app.Service;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.IBinder;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,33 +22,29 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.StringTokenizer;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
     EditText input;
-    private static Socket s;
-//    private static PrintWriter pw;
-    DataOutputStream dos;
-    DataInputStream dis;
-//    TextView msgShow;
     String msg, MsgToSend;
+    String userNameChattingWith;
     Handler handler;
     Handler handlerSent;
     ListView listView;
     Boolean send = false;
-//    TextView msgSent;
-    boolean flag = false;
+    String ts;
+    Long tsLong;
 
     ArrayList<Message> list = new ArrayList<>();
-    //ArrayAdapter<String> listAdapter;
     MessageAdapter adapter;
 
     String message = "connect#client 0";
     String msg1;
-    private static String ip = "10.100.127.219";
-
-
+    boolean msgBlank = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +54,11 @@ public class MainActivity extends AppCompatActivity {
         handler = new Handler();
         handlerSent = new Handler();
 
-        //listAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,list);
+        Intent intent = getIntent();
+        userNameChattingWith = intent.getStringExtra("userToChatTo");
+        TextView userHeader = findViewById(R.id.user_header);
+        userHeader.setText(userNameChattingWith);
+
         adapter = new MessageAdapter(this,list);
         listView = findViewById(R.id.list_view);
         listView.setAdapter(adapter);
@@ -71,22 +75,28 @@ public class MainActivity extends AppCompatActivity {
     public void send_text(View v) {
 
         message = input.getText().toString();
-        msg1 = message;
-        StringTokenizer st = new StringTokenizer(msg1, "#");
-        MsgToSend = st.nextToken();
 
-        list.add(new Message(MsgToSend,true));
-        adapter.notifyDataSetChanged();
+        if(message.equals("")){
+            Toast.makeText(this,"Cannot Send Blank Message",Toast.LENGTH_LONG).show();
+            msgBlank = true;
+        }else {
 
-        Log.d("ErrorList:",""+list.size());
+            msg1 = message;
+            //tsLong = System.currentTimeMillis()/1000;
+           //ts = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + "";
+//            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("hh:mm");
+//            String ts = simpleDateFormat.format(new Date());
+            MsgToSend = message + "#" + userNameChattingWith;
 
-        myTaskSend mt2 = new myTaskSend();
-        mt2.execute(message);
+            list.add(new Message(message, true));
+            adapter.notifyDataSetChanged();
 
+            myTaskSend mt2 = new myTaskSend();
+            mt2.execute(MsgToSend);
 
+            msgBlank = false;
 
-
-        Toast.makeText(getApplicationContext(),"Data Sent",Toast.LENGTH_LONG).show();
+        }
     }
 
 
@@ -100,26 +110,21 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected String doInBackground(String... strings) {
-            if(!message.equals("")) {
+            if(!MsgToSend.equals("") && msgBlank == false) {
 
                 try {
-                    dos.writeUTF(message);
-                    dos.flush();
+                    FirstPage.dos.writeUTF(MsgToSend);
+
+                    FirstPage.dos.flush();
                     send = false;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                message = "";
+                MsgToSend = "";
             }
             return null;
         }
     }
-
-
-
-
-
-
 
     class myTask extends AsyncTask<Void,Void,Void>{
 
@@ -127,13 +132,6 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(Void... voids) {
 
 
-            try {
-                s = new Socket(ip, 1234);
-                dos = new DataOutputStream(s.getOutputStream());
-                dis = new DataInputStream(s.getInputStream());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
 
             Thread readMessage = new Thread(new Runnable()
             {
@@ -143,24 +141,18 @@ public class MainActivity extends AppCompatActivity {
                     while (true) {
                         try {
 
-                           // msg = "";
-                            msg = dis.readUTF();
-                            Log.d("Error:",msg);
-                            //System.out.println(msg);
+                            msg = FirstPage.dis.readUTF();
                             if(!msg.equals("") || msg!=null)
                             {
-//                                    msgShow.setText(msg);
 
                                 handler.post(new Runnable() {
                                     public void run() {
                                         list.add(new Message(msg,false));
                                         adapter.notifyDataSetChanged();
-                                        Log.d("ErrorList:",""+list.size());
 
                                     }
                                 });
 
-                                Log.d("Error1:",msg);
                             }
                         } catch (IOException e) {
 
